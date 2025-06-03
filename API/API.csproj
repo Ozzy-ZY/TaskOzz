@@ -14,4 +14,10 @@
       <Folder Include="Controllers\" />
     </ItemGroup>
 
+    <ItemGroup>
+      <ProjectReference Include="..\APPLICATION\APPLICATION.csproj" />
+      <ProjectReference Include="..\DOMAIN\DOMAIN.csproj" />
+      <ProjectReference Include="..\INFRASTRUCTURE\INFRASTRUCTURE.csproj" />
+    </ItemGroup>
+
 </Project>
