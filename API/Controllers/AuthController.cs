@@ -59,9 +59,20 @@ public class AuthController : ControllerBase
     }
 
     [HttpGet("RefreshToken")]
-    public async Task<IActionResult> RefreshToken([FromBody] RefreshTokenRequest request)
+    public async Task<IActionResult> RefreshToken([FromBody] RefreshOrRevokeTokenRequest request)
     {
         var result = await _authService.RefreshAccessTokenAsync(request);
+        if (result.StatusCode == (int)AuthService.AuthFlags.Success)
+            return Ok(result);
+        
+        return BadRequest(result);
+    }
+
+    [HttpPost("RevokeToken")]
+    [Authorize]
+    public async Task<IActionResult> RevokeToken([FromBody] RefreshOrRevokeTokenRequest request)
+    {
+        var result = await _authService.RevokeRefreshTokenAsync(request.RefreshToken);
         if (result.StatusCode == (int)AuthService.AuthFlags.Success)
             return Ok(result);
         

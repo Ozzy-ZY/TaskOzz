@@ -175,7 +175,7 @@ public partial class AuthService(
         };
     }
 
-    public async Task<Result> RefreshAccessTokenAsync(RefreshTokenRequest request)
+    public async Task<Result> RefreshAccessTokenAsync(RefreshOrRevokeTokenRequest request)
     {
         var oldToken = await _context.RefreshTokens
             .FirstOrDefaultAsync(t => t.Token == request.RefreshToken && t.IsActive);
@@ -213,5 +213,51 @@ public partial class AuthService(
                 RefreshTokenExpiration = newRefreshToken.ExpiresAt
             }
         };
+    }
+
+    public async Task<Result> RevokeRefreshTokenAsync(string refreshToken)
+    {
+        try
+        {
+            var token = await _context.RefreshTokens
+                .FirstOrDefaultAsync(t => t.Token == refreshToken && t.IsActive);
+
+            if (token is null)
+            {
+                return new Result
+                {
+                    StatusCode = (int)AuthFlags.InvalidToken,
+                    Message = "Invalid or expired refresh token"
+                };
+            }
+
+            token.IsRevoked = true;
+            token.RevokeReason = "User logged out";
+            token.ReplacedByToken = null;
+
+            if (await _context.SaveChangesAsync() <= 0)
+            {
+                return new Result
+                {
+                    StatusCode = (int)AuthFlags.DataBaseError,
+                    Message = "Failed to revoke refresh token"
+                };
+            }
+
+            return new Result
+            {
+                StatusCode = (int)AuthFlags.Success,
+                Message = "Token revoked successfully"
+            };
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error revoking refresh token");
+            return new Result
+            {
+                StatusCode = (int)AuthFlags.Exception,
+                Message = "An error occurred while revoking the token"
+            };
+        }
     }
 }
