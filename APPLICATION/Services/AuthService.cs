@@ -109,6 +109,7 @@ public partial class AuthService(
             _logger.LogInformation("Generated token: {Token}", token);
             
             var refreshToken = await _jwtService.GenerateRefreshTokenAsync(user.Id);
+            await _context.RefreshTokens.AddAsync(refreshToken);
             var authResult = new AuthResult()
             {
                 AccessToken = token,
@@ -117,6 +118,15 @@ public partial class AuthService(
                 RefreshTokenExpiration = refreshToken.ExpiresAt
             };
             user.LastLogin = DateTime.UtcNow;
+            if (await _context.SaveChangesAsync() <= 0)
+            {
+                return new Result()
+                {
+                    StatusCode = (int)AuthFlags.DataBaseError,
+                    Message = "Failed to save refresh token to database",
+                    Data = loginRequest,
+                };
+            }
             return new Result
             {
                 StatusCode = (int)AuthFlags.Success,
@@ -133,5 +143,75 @@ public partial class AuthService(
                 Message = "Internal Error"
             };
         }
+    }
+
+    public async Task<Result> ChangePasswordAsync(ChangePasswordRequest request)
+    {
+        var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == request.Email);
+        if (user is null)
+        {
+            return new Result()
+            {
+                StatusCode = (int)AuthFlags.InvalidCredentials,
+                Message = "Invalid Credentials",
+                Data = request
+            };
+        }
+        var newHash = _passwordService.HashPassword(request.NewPassword);
+        user.PasswordHash = newHash;
+        if(await _context.SaveChangesAsync() <=0)
+        {
+            return new Result()
+            {
+                StatusCode = (int)AuthFlags.DataBaseError,
+                Message = "Failed to save user to database",
+                Data = request
+            };
+        }
+        return new Result()
+        {
+            StatusCode = (int)AuthFlags.Success,
+            Message = "Password Changed Successfully"
+        };
+    }
+
+    public async Task<Result> RefreshAccessTokenAsync(RefreshTokenRequest request)
+    {
+        var oldToken = await _context.RefreshTokens
+            .FirstOrDefaultAsync(t => t.Token == request.RefreshToken && t.IsActive);
+        if (oldToken is null)
+        {
+            return new Result()
+            {
+                StatusCode = (int)AuthFlags.InvalidToken,
+                Message = "Refresh Token is not Valid",
+            };
+        }
+        var newRefreshToken = await _jwtService.GenerateRefreshTokenAsync(oldToken.UserId);
+        var user = await _context.Users.FirstOrDefaultAsync(u=> u.Id == oldToken.UserId);
+        var (token, expiry) = await _jwtService.GenerateTokenAsync(user!);
+        _context.RefreshTokens.Remove(oldToken);
+        await _context.RefreshTokens.AddAsync(newRefreshToken);
+        if (await _context.SaveChangesAsync() <= 0)
+        {
+            return new Result()
+            {
+                StatusCode = (int)AuthFlags.DataBaseError,
+                Message = "Failed to save refresh token to database",
+                Data = request,
+            };
+        }
+        return new Result()
+        {
+            StatusCode = (int)AuthFlags.Success,
+            Message = "Token Refreshed Successfully",
+            Data = new AuthResult()
+            {
+                AccessToken = token,
+                AccessTokenExpiration = expiry,
+                RefreshToken = newRefreshToken.Token,
+                RefreshTokenExpiration = newRefreshToken.ExpiresAt
+            }
+        };
     }
 }

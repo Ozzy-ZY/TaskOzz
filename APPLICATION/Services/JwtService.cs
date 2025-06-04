@@ -13,7 +13,7 @@ namespace APPLICATION.Services;
 public class JwtService(
     IConfiguration configuration,
     TokenValidationParameters tokenValidationParameters,
-    ILogger<JwtService> logger, AppDbContext context)
+    ILogger<JwtService> logger)
 {
     public async Task<(string Token, DateTime expirationDate)> GenerateTokenAsync(AppUser user)
     {
@@ -27,7 +27,6 @@ public class JwtService(
             var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey!));
             var claims = await GenerateUserClaimsAsync(user);
             var claimsList = claims.ToList();
-            var roleClaim = claimsList.FirstOrDefault(x => x.Type == ClaimTypes.Role)?.Value;
             var expiryMinutes = int.Parse(configuration["Jwt:ExpiryMinutes"]!);
             var expiresAt = DateTime.UtcNow.AddMinutes(expiryMinutes);
             var fullClaims = AddStandardClaims(claimsList);
@@ -84,7 +83,7 @@ public class JwtService(
 
         return enhancedClaims;
     }
-    public async Task<RefreshToken> GenerateRefreshTokenAsync(int userId)
+    public Task<RefreshToken> GenerateRefreshTokenAsync(int userId)
     {
         var refreshToken = new RefreshToken
         {
@@ -96,6 +95,6 @@ public class JwtService(
         // ToDo: Removing Old Tokens
         // *note*: Consider implementing a scheduled cleanUp Service 
         
-        return refreshToken;
+        return Task.FromResult(refreshToken);
     }
 }

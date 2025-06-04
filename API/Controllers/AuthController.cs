@@ -46,19 +46,25 @@ public class AuthController : ControllerBase
     {
         return Ok(User);
     }
-    [HttpGet("Current-User")]
-    [Authorize(Roles = "User")]
-    public async Task<IActionResult> CurrentUser()
+    
+    [HttpPut("ChangePassword")]
+    [Authorize]
+    public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordRequest request)
     {
-        _logger.LogInformation("CurrentUser endpoint called");
-        _logger.LogInformation("Authorization header: {Header}", Request.Headers["Authorization"].ToString());
-        _logger.LogInformation("User authenticated: {IsAuthenticated}", User.Identity?.IsAuthenticated);
-        _logger.LogInformation("User claims: {Claims}", string.Join(", ", User.Claims.Select(c => $"{c.Type}: {c.Value}")));
+        var result = await _authService.ChangePasswordAsync(request);
+        if (result.StatusCode == (int)AuthService.AuthFlags.Success)
+            return Ok(result);
         
-        var user = User.Claims.FirstOrDefault(c => c.Type == "UserId");
-        if (user != null) return Ok(user);
+        return BadRequest(result);
+    }
+
+    [HttpGet("RefreshToken")]
+    public async Task<IActionResult> RefreshToken([FromBody] RefreshTokenRequest request)
+    {
+        var result = await _authService.RefreshAccessTokenAsync(request);
+        if (result.StatusCode == (int)AuthService.AuthFlags.Success)
+            return Ok(result);
         
-        _logger.LogWarning("UserId claim not found in token");
-        return Unauthorized("Invalid token: UserId claim not found");
+        return BadRequest(result);
     }
 }
