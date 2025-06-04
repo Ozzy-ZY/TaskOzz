@@ -69,6 +69,7 @@ public class Program
         app.UseStaticFiles();
         app.UseHttpsRedirection();
         app.UseCors("AllowAll");
+        app.UseStaticFiles();
         
         // Ensure these are in the correct order
         app.UseAuthentication();

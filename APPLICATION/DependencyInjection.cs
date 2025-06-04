@@ -17,6 +17,7 @@ public static class DependencyInjection
         services.AddScoped<AuthService>();
         services.AddScoped<PasswordService>();
         services.AddScoped<JwtService>();
+        services.AddScoped<ImageService>();
         services.AddFluentValidationAutoValidation(autoValidationMvcConfiguration =>
         {
             autoValidationMvcConfiguration.ValidationStrategy = ValidationStrategy.All;
