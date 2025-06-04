@@ -1,0 +1,137 @@
+﻿using APPLICATION.DTOs;
+using APPLICATION.DTOs.Mappers;
+using APPLICATION.Validator;
+using DOMAIN.Models;
+using INFRASTRUCTURE.DataAccess;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
+
+namespace APPLICATION.Services;
+
+public partial class AuthService(
+    AppDbContext context,
+    LoginValidator loginValidator,
+    RegisterValidator registerValidator,
+    PasswordService passwordService,
+    ILogger<AuthService> logger,
+    JwtService jwtService)
+{
+    private readonly AppDbContext _context = context;
+    private readonly LoginValidator _loginValidator = loginValidator;
+    private readonly RegisterValidator _registerValidator = registerValidator;
+    private readonly PasswordService _passwordService = passwordService;
+    private readonly ILogger<AuthService> _logger = logger;
+    private readonly JwtService _jwtService = jwtService;
+    
+    public async Task<Result> RegisterUserAsync(RegisterRequest registerRequest)
+    {
+        try
+        {
+            var existingUser = await _context.Users
+                .AsNoTracking()
+                .FirstOrDefaultAsync(u => u.Email == registerRequest.Email);
+            
+            if (existingUser is not null)
+            {
+                return new Result
+                { 
+                    StatusCode = (int)AuthFlags.UserAlreadyExists,
+                    Message = "User with this email already exists",
+                    Data = registerRequest
+                };
+            }
+            
+            var hashedPassword = _passwordService.HashPassword(registerRequest.Password);
+            var newUser = registerRequest.ToAppUser();
+            newUser.PasswordHash = hashedPassword;
+
+            await _context.Users.AddAsync(newUser);
+            var saveResult = await _context.SaveChangesAsync();
+        
+            if (saveResult > 0)
+            {
+                return new Result
+                {
+                    StatusCode = (int)AuthFlags.Success,
+                    Message = "User registered successfully",
+                    Data = registerRequest
+                };
+            }
+
+            return new Result
+            {
+                StatusCode = (int)AuthFlags.DataBaseError,
+                Message = "Failed to save user to database",
+                Data = registerRequest
+            };
+        }
+        catch (Exception ex)
+        {
+            return new Result
+            {
+                StatusCode = (int)AuthFlags.Exception,
+                Message = $"An error occurred during registration",
+                Data = registerRequest
+            };
+        }
+    }
+
+    public async Task<Result> LoginUserAsync(LoginRequest loginRequest)
+    {
+        try
+        {
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == loginRequest.Email);
+            if (user is null)
+            {
+                return new Result
+                {
+                    StatusCode = (int)AuthFlags.InvalidCredentials,
+                    Message = "please Enter Valid Credentials",
+                    Data = loginRequest
+                };
+            }
+
+            var res = _passwordService
+                .VerifyHashedPassword(user.PasswordHash, loginRequest.Password);
+            if (!res)
+            {
+                return new Result
+                {
+                    StatusCode = (int)AuthFlags.InvalidCredentials,
+                    Message = "please Enter Valid Credentials",
+                    Data = loginRequest
+                };
+            }
+
+            // generate access & Refresh tokens and return them
+            var (token, expiry) = await _jwtService.GenerateTokenAsync(user);
+            _logger.LogInformation("Generated token: {Token}", token);
+            
+            var refreshToken = await _jwtService.GenerateRefreshTokenAsync(user.Id);
+            var authResult = new AuthResult()
+            {
+                AccessToken = token,
+                AccessTokenExpiration = expiry,
+                RefreshToken = refreshToken.Token,
+                RefreshTokenExpiration = refreshToken.ExpiresAt
+            };
+            user.LastLogin = DateTime.UtcNow;
+            return new Result
+            {
+                StatusCode = (int)AuthFlags.Success,
+                Message = "Login Successful",
+                Data = authResult
+            };
+        }
+        catch(Exception ex)
+        {
+            _logger.LogError(ex, "Exception in Login {LoginRequest}", loginRequest);
+            return new Result()
+            {
+                StatusCode = (int)AuthFlags.Exception,
+                Message = "Internal Error"
+            };
+        }
+    }
+}
