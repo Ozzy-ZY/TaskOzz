@@ -10,24 +10,48 @@ public class TaskController(TaskService taskService) : ControllerBase
 {
     private readonly TaskService _taskService = taskService;
 
-    [HttpPost("")]
+    [HttpPost]
     [Authorize]
     public async Task<IActionResult> AddTask(AddTaskRequest request)
     {
+        var userId = int.Parse(User.Claims.FirstOrDefault(c => c.Type == "UserId")?.Value!);
+        request.UserId = userId;
+        
         var result = await _taskService.AddTaskToUserAsync(request);
-        if (result.StatusCode == (int)StatusFlags.Success)
-        {
-            return Ok(result);
-        }
-        return BadRequest(result);
+        return StatusCode(result.StatusCode, result);
     }
 
-    [HttpGet("")]
+    [HttpGet]
     [Authorize]
     public async Task<IActionResult> GetTasks()
     {
         var userId = int.Parse(User.Claims.FirstOrDefault(c => c.Type == "UserId")?.Value!);
         var result = await _taskService.GetAllTasksForUser(userId);
-        return Ok(result);
+        return StatusCode(result.StatusCode, result);
+    }
+
+    [HttpGet("{taskId}")]
+    [Authorize]
+    public async Task<IActionResult> GetTask(int taskId)
+    {
+        var userId = int.Parse(User.Claims.FirstOrDefault(c => c.Type == "UserId")?.Value!);
+        var result = await _taskService.GetTaskById(taskId, userId);
+        return StatusCode(result.StatusCode, result);
+    }
+
+    [HttpPut]
+    [Authorize]
+    public async Task<IActionResult> UpdateTask([FromForm] UpdateTaskRequest request)
+    {
+        var result = await _taskService.UpdateTaskAsync(request);
+        return StatusCode(result.StatusCode, result);
+    }
+
+    [HttpDelete("{taskId}")]
+    [Authorize]
+    public async Task<IActionResult> DeleteTask(int taskId)
+    {
+        var result = await _taskService.DeleteTaskAsync(new DeleteTaskRequest { TaskId = taskId });
+        return StatusCode(result.StatusCode, result);
     }
 }
