@@ -11,7 +11,7 @@ public static class TaskMappers
             Title = request.Title,
             Description = request.Description,
             Priority = request.Priority,
-            UserId = request.UserId,
+            UserId = (int)request.UserId!,
 
         };
     }
