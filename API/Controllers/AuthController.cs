@@ -23,7 +23,7 @@ public class AuthController : ControllerBase
     public async Task<IActionResult> Register([FromBody] RegisterRequest request)
     {
         var result = await _authService.RegisterUserAsync(request);
-        if (result.StatusCode == (int)AuthService.AuthFlags.Success)
+        if (result.StatusCode == (int)StatusFlags.Success)
             return Ok(result);
         
         return BadRequest(result);
@@ -34,7 +34,7 @@ public class AuthController : ControllerBase
     public async Task<IActionResult> Login([FromBody] LoginRequest request)
     {
         var result = await _authService.LoginUserAsync(request);
-        if (result.StatusCode == (int)AuthService.AuthFlags.Success)
+        if (result.StatusCode == (int)StatusFlags.Success)
             return Ok(result);
         
         return BadRequest(result);
@@ -52,7 +52,7 @@ public class AuthController : ControllerBase
     public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordRequest request)
     {
         var result = await _authService.ChangePasswordAsync(request);
-        if (result.StatusCode == (int)AuthService.AuthFlags.Success)
+        if (result.StatusCode == (int)StatusFlags.Success)
             return Ok(result);
         
         return BadRequest(result);
@@ -62,7 +62,7 @@ public class AuthController : ControllerBase
     public async Task<IActionResult> RefreshToken([FromBody] RefreshOrRevokeTokenRequest request)
     {
         var result = await _authService.RefreshAccessTokenAsync(request);
-        if (result.StatusCode == (int)AuthService.AuthFlags.Success)
+        if (result.StatusCode == (int)StatusFlags.Success)
             return Ok(result);
         
         return BadRequest(result);
@@ -73,7 +73,7 @@ public class AuthController : ControllerBase
     public async Task<IActionResult> RevokeToken([FromBody] RefreshOrRevokeTokenRequest request)
     {
         var result = await _authService.RevokeRefreshTokenAsync(request.RefreshToken);
-        if (result.StatusCode == (int)AuthService.AuthFlags.Success)
+        if (result.StatusCode == (int)StatusFlags.Success)
             return Ok(result);
         
         return BadRequest(result);

@@ -36,7 +36,7 @@ public partial class AuthService(
             {
                 return new Result
                 { 
-                    StatusCode = (int)AuthFlags.UserAlreadyExists,
+                    StatusCode = (int)StatusFlags.UserAlreadyExists,
                     Message = "User with this email already exists",
                     Data = registerRequest
                 };
@@ -53,7 +53,7 @@ public partial class AuthService(
             {
                 return new Result
                 {
-                    StatusCode = (int)AuthFlags.Success,
+                    StatusCode = (int)StatusFlags.Success,
                     Message = "User registered successfully",
                     Data = registerRequest
                 };
@@ -61,7 +61,7 @@ public partial class AuthService(
 
             return new Result
             {
-                StatusCode = (int)AuthFlags.DataBaseError,
+                StatusCode = (int)StatusFlags.DataBaseError,
                 Message = "Failed to save user to database",
                 Data = registerRequest
             };
@@ -70,7 +70,7 @@ public partial class AuthService(
         {
             return new Result
             {
-                StatusCode = (int)AuthFlags.Exception,
+                StatusCode = (int)StatusFlags.Exception,
                 Message = $"An error occurred during registration",
                 Data = registerRequest
             };
@@ -86,7 +86,7 @@ public partial class AuthService(
             {
                 return new Result
                 {
-                    StatusCode = (int)AuthFlags.InvalidCredentials,
+                    StatusCode = (int)StatusFlags.InvalidCredentials,
                     Message = "please Enter Valid Credentials",
                     Data = loginRequest
                 };
@@ -98,7 +98,7 @@ public partial class AuthService(
             {
                 return new Result
                 {
-                    StatusCode = (int)AuthFlags.InvalidCredentials,
+                    StatusCode = (int)StatusFlags.InvalidCredentials,
                     Message = "please Enter Valid Credentials",
                     Data = loginRequest
                 };
@@ -122,14 +122,14 @@ public partial class AuthService(
             {
                 return new Result()
                 {
-                    StatusCode = (int)AuthFlags.DataBaseError,
+                    StatusCode = (int)StatusFlags.DataBaseError,
                     Message = "Failed to save refresh token to database",
                     Data = loginRequest,
                 };
             }
             return new Result
             {
-                StatusCode = (int)AuthFlags.Success,
+                StatusCode = (int)StatusFlags.Success,
                 Message = "Login Successful",
                 Data = authResult
             };
@@ -139,7 +139,7 @@ public partial class AuthService(
             _logger.LogError(ex, "Exception in Login {LoginRequest}", loginRequest);
             return new Result()
             {
-                StatusCode = (int)AuthFlags.Exception,
+                StatusCode = (int)StatusFlags.Exception,
                 Message = "Internal Error"
             };
         }
@@ -152,7 +152,7 @@ public partial class AuthService(
         {
             return new Result()
             {
-                StatusCode = (int)AuthFlags.InvalidCredentials,
+                StatusCode = (int)StatusFlags.InvalidCredentials,
                 Message = "Invalid Credentials",
                 Data = request
             };
@@ -163,14 +163,14 @@ public partial class AuthService(
         {
             return new Result()
             {
-                StatusCode = (int)AuthFlags.DataBaseError,
+                StatusCode = (int)StatusFlags.DataBaseError,
                 Message = "Failed to save user to database",
                 Data = request
             };
         }
         return new Result()
         {
-            StatusCode = (int)AuthFlags.Success,
+            StatusCode = (int)StatusFlags.Success,
             Message = "Password Changed Successfully"
         };
     }
@@ -183,7 +183,7 @@ public partial class AuthService(
         {
             return new Result()
             {
-                StatusCode = (int)AuthFlags.InvalidToken,
+                StatusCode = (int)StatusFlags.InvalidToken,
                 Message = "Refresh Token is not Valid",
             };
         }
@@ -196,14 +196,14 @@ public partial class AuthService(
         {
             return new Result()
             {
-                StatusCode = (int)AuthFlags.DataBaseError,
+                StatusCode = (int)StatusFlags.DataBaseError,
                 Message = "Failed to save refresh token to database",
                 Data = request,
             };
         }
         return new Result()
         {
-            StatusCode = (int)AuthFlags.Success,
+            StatusCode = (int)StatusFlags.Success,
             Message = "Token Refreshed Successfully",
             Data = new AuthResult()
             {
@@ -226,7 +226,7 @@ public partial class AuthService(
             {
                 return new Result
                 {
-                    StatusCode = (int)AuthFlags.InvalidToken,
+                    StatusCode = (int)StatusFlags.InvalidToken,
                     Message = "Invalid or expired refresh token"
                 };
             }
@@ -239,14 +239,14 @@ public partial class AuthService(
             {
                 return new Result
                 {
-                    StatusCode = (int)AuthFlags.DataBaseError,
+                    StatusCode = (int)StatusFlags.DataBaseError,
                     Message = "Failed to revoke refresh token"
                 };
             }
 
             return new Result
             {
-                StatusCode = (int)AuthFlags.Success,
+                StatusCode = (int)StatusFlags.Success,
                 Message = "Token revoked successfully"
             };
         }
@@ -255,7 +255,7 @@ public partial class AuthService(
             _logger.LogError(ex, "Error revoking refresh token");
             return new Result
             {
-                StatusCode = (int)AuthFlags.Exception,
+                StatusCode = (int)StatusFlags.Exception,
                 Message = "An error occurred while revoking the token"
             };
         }
