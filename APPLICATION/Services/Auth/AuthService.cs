@@ -106,7 +106,7 @@ public partial class AuthService(
 
             // generate access & Refresh tokens and return them
             var (token, expiry) = await _jwtService.GenerateTokenAsync(user);
-            _logger.LogInformation("Generated token: {Token}", token);
+            //_logger.LogInformation("Generated token: {Token}", token);
             
             var refreshToken = await _jwtService.GenerateRefreshTokenAsync(user.Id);
             await _context.RefreshTokens.AddAsync(refreshToken);
@@ -145,6 +145,17 @@ public partial class AuthService(
         }
     }
 
+    public async Task<Result> GetUserDataAsync(int userId)
+    {
+        var user = await _context.Users.FirstOrDefaultAsync(u=> u.Id == userId);
+        var dto = user!.ToDto();
+        return new Result()
+        {
+            StatusCode = (int)StatusFlags.Success,
+            Message = "User Data Retrieved Successfully",
+            Data = dto
+        };
+    }
     public async Task<Result> ChangePasswordAsync(ChangePasswordRequest request)
     {
         var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == request.Email);
@@ -178,7 +189,10 @@ public partial class AuthService(
     public async Task<Result> RefreshAccessTokenAsync(RefreshOrRevokeTokenRequest request)
     {
         var oldToken = await _context.RefreshTokens
-            .FirstOrDefaultAsync(t => t.Token == request.RefreshToken && t.IsActive);
+            .Where(r => r.Token == request.RefreshToken && 
+                        (r.IsActiveOverride == true || 
+                         (r.IsActiveOverride == null && !r.IsRevoked && r.ExpiresAt > DateTime.UtcNow)))
+            .FirstOrDefaultAsync();
         if (oldToken is null)
         {
             return new Result()

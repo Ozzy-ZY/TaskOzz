@@ -13,4 +13,14 @@ public static class UserMappers
             PasswordHash = request.Password
         };
     }
+
+    public static MeResponse ToDto(this AppUser user)
+    {
+        return new MeResponse()
+        {
+            UserName = user.UserName,
+            Email = user.Email,
+            IconPath = user.IconUrl
+        };
+    }
 }

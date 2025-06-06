@@ -44,7 +44,9 @@ public class AuthController : ControllerBase
     [Authorize]
     public async Task<IActionResult> Me()
     {
-        return Ok(User);
+        var userId = int.Parse(User.Claims.FirstOrDefault(c => c.Type == "UserId")?.Value!);
+        var result = await _authService.GetUserDataAsync(userId);
+        return Ok(result);
     }
     
     [HttpPut("ChangePassword")]
@@ -58,7 +60,7 @@ public class AuthController : ControllerBase
         return BadRequest(result);
     }
 
-    [HttpGet("RefreshToken")]
+    [HttpPost("RefreshToken")]
     public async Task<IActionResult> RefreshToken([FromBody] RefreshOrRevokeTokenRequest request)
     {
         var result = await _authService.RefreshAccessTokenAsync(request);
