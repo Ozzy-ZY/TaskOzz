@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace DOMAIN.Models;
 
@@ -13,7 +14,17 @@ public class RefreshToken
     public bool IsRevoked { get; set; }
     public string? ReplacedByToken { get; set; }
     public string? RevokeReason { get; set; }
-    public bool IsExpired => DateTime.UtcNow >= ExpiresAt;
-    public bool IsActive => !IsRevoked && !IsExpired;
     
+    // Database property for manual override (nullable - null means "use computed value")
+    public bool? IsActiveOverride { get; set; }
+    
+    [NotMapped]
+    public bool IsExpired => DateTime.UtcNow >= ExpiresAt;
+    
+    [NotMapped]
+    public bool IsActive
+    {
+        get => IsActiveOverride ?? (!IsRevoked && !IsExpired); // Use override if set, otherwise compute
+        set => IsActiveOverride = value; // Setting this overrides the computed behavior
+    }
 }
