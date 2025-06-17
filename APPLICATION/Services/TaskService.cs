@@ -63,10 +63,10 @@ public class TaskService(AppDbContext context, ImageService imageService)
         return req.SortKey?.ToLower() switch
         {
             "title" => t => t.Title,
-            "Priority" => t => t.Priority,
+            "priority" => t => t.Priority,
             "status" => t => t.Status,
-            "isDone" => t => t.IsDone,
-            "createdAt" => t => t.CreatedAt,
+            "isdone" => t => t.IsDone,
+            "createdat" => t => t.CreatedAt,
             _ => t => t.Id
         };
     }
