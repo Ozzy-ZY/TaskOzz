@@ -33,19 +33,21 @@ public class TaskService(AppDbContext context, ImageService imageService)
         };
     }
 
-    public async Task<Result> GetAllTasksForUser(int userId)
+    public async Task<Result> GetAllTasksForUser(GetTasksRequest req)
     {
-        var tasks = await _context.Tasks
-            .Where(t => t.UserId == userId)
-            .OrderByDescending(t => t.CreatedAt)
-            .AsNoTracking()
-            .ToListAsync();
-
+        var tasks = _context.Tasks
+            .Where(t=> t.UserId == req.UserId);;
+        if (!string.IsNullOrWhiteSpace(req.FilterKey))
+        {
+            tasks = tasks
+                .Where(t => t.Title.Contains(req.FilterKey) || t.Description.Contains(req.FilterKey));
+        }
+        
         return new Result
         {
             StatusCode = (int)StatusFlags.Success,
             Message = "Tasks retrieved successfully",
-            Data = tasks
+            Data = await tasks.ToListAsync()
         };
     }
 
