@@ -1,7 +1,9 @@
-﻿using APPLICATION.DTOs;
+﻿using System.Linq.Expressions;
+using APPLICATION.DTOs;
 using APPLICATION.DTOs.Mappers;
 using INFRASTRUCTURE.DataAccess;
 using Microsoft.EntityFrameworkCore;
+using Task = DOMAIN.Models.Task;
 
 namespace APPLICATION.Services;
 
@@ -36,18 +38,36 @@ public class TaskService(AppDbContext context, ImageService imageService)
     public async Task<Result> GetAllTasksForUser(GetTasksRequest req)
     {
         var tasks = _context.Tasks
-            .Where(t=> t.UserId == req.UserId);;
+            .Where(t=> t.UserId == req.UserId);
         if (!string.IsNullOrWhiteSpace(req.FilterKey))
         {
             tasks = tasks
                 .Where(t => t.Title.Contains(req.FilterKey) || t.Description.Contains(req.FilterKey));
         }
+        var keySelector = GetSortProp(req);
+        if (req.SortOrder?.ToLower() == "desc")
+            tasks = tasks.OrderByDescending(keySelector);
+        else
+            tasks = tasks.OrderBy(keySelector);
         
         return new Result
         {
             StatusCode = (int)StatusFlags.Success,
             Message = "Tasks retrieved successfully",
             Data = await tasks.ToListAsync()
+        };
+    }
+
+    private static Expression<Func<Task, object>> GetSortProp(GetTasksRequest req)
+    {
+        return req.SortKey?.ToLower() switch
+        {
+            "title" => t => t.Title,
+            "Priority" => t => t.Priority,
+            "status" => t => t.Status,
+            "isDone" => t => t.IsDone,
+            "createdAt" => t => t.CreatedAt,
+            _ => t => t.Id
         };
     }
 

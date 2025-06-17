@@ -23,10 +23,10 @@ public class TaskController(TaskService taskService) : ControllerBase
 
     [HttpGet]
     [Authorize]
-    public async Task<IActionResult> GetTasks(string? filterKey)
+    public async Task<IActionResult> GetTasks(string? filterKey, string? sortKey = "Id", string? sortOrder = "asc")
     {
         var userId = int.Parse(User.Claims.FirstOrDefault(c => c.Type == "UserId")?.Value!);
-        var req = new GetTasksRequest{UserId = userId, FilterKey = filterKey };
+        var req = new GetTasksRequest{UserId = userId, FilterKey = filterKey,SortKey = sortKey, SortOrder = sortOrder };
         var result = await _taskService.GetAllTasksForUser(req);
         return StatusCode(result.StatusCode, result);
     }
