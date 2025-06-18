@@ -6,4 +6,6 @@ public record GetTasksRequest
     public string? FilterKey { get; set; }
     public string? SortKey { get; set; }
     public string? SortOrder { get; set; }
+    public int Page { get; set; }
+    public int PageSize { get; set; }
 }

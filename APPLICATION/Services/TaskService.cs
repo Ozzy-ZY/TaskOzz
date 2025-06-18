@@ -1,6 +1,7 @@
 ﻿using System.Linq.Expressions;
 using APPLICATION.DTOs;
 using APPLICATION.DTOs.Mappers;
+using APPLICATION.Services.Helpers;
 using INFRASTRUCTURE.DataAccess;
 using Microsoft.EntityFrameworkCore;
 using Task = DOMAIN.Models.Task;
@@ -38,7 +39,7 @@ public class TaskService(AppDbContext context, ImageService imageService)
     public async Task<Result> GetAllTasksForUser(GetTasksRequest req)
     {
         var tasks = _context.Tasks
-            .Where(t=> t.UserId == req.UserId);
+            .Where(t=> t.UserId == req.UserId).AsQueryable();
         if (!string.IsNullOrWhiteSpace(req.FilterKey))
         {
             tasks = tasks
@@ -49,12 +50,13 @@ public class TaskService(AppDbContext context, ImageService imageService)
             tasks = tasks.OrderByDescending(keySelector);
         else
             tasks = tasks.OrderBy(keySelector);
+        var pagedTasks = await PagedList<Task>.CreateAsync(tasks, req.Page, req.PageSize);
         
         return new Result
         {
             StatusCode = (int)StatusFlags.Success,
             Message = "Tasks retrieved successfully",
-            Data = await tasks.ToListAsync()
+            Data = pagedTasks
         };
     }
 
